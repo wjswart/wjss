@@ -1,0 +1,40 @@
+#include <DHT.h>
+#include <GSM.h>
+
+#define DHTPIN 2  // Pin where the DHT sensor is connected
+#define DHTTYPE DHT11  // Type of DHT sensor (DHT11, DHT22, etc.)
+
+DHT dht(DHTPIN, DHTTYPE);
+
+GSM gsmAccess;
+GSM_SMS sms;
+
+char message[160];
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+  
+  // Initialize GSM module
+  while (gsmAccess.begin() != GSM_READY) {
+    delay(1000);
+  }
+}
+
+void loop() {
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  // Send data via SMS
+  sprintf(message, "Temperature: %.2f C, Humidity: %.2f%%", temperature, humidity);
+  sms.beginSMS("+1234567890"); // Replace with your phone number
+  sms.print(message);
+  sms.endSMS();
+
+  delay(5000); // Send data every 5 seconds
+}
